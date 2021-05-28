@@ -3,7 +3,7 @@ import yfinance as yf
 from datetime import date
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn import preprocessing,
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
 
@@ -14,50 +14,60 @@ class Ticker:
 
     def check_ticker(self):
             ticker_info = yf.Ticker(self.ticker)
-            if len(ticker_info.info) == 1:
+            if not ticker_info.info:
                 return False
             else:
                 return True
 
 #pulls the necessary data
-class GetData():
+class GetData:
     def __init__(self, ticker):
         self.ticker = ticker
         self.today_date = date.today()
-        self.begin_month = self.today_date.replace(day=1)
+        self.begin_month = self.today_date.replace(month=1, day=1)
 
     def get_data(self):
         chosen_ticker = yf.Ticker(self.ticker)
-        tickerData = chosen_ticker.history(period="1d", start=self.begin_month, end=self.today_date)
-        print(tickerData[['Close']])
+        raw_ticker_data = chosen_ticker.history(period="1d", start=self.begin_month, end=self.today_date)
+        return raw_ticker_data
 
-    def plot_data(self):
-        chosen_ticker = yf.Ticker(self.ticker)
-        tickerData = chosen_ticker.history(period="1d", start=self.begin_month, end=self.today_date)
+#process the raw data
+class ProcessData():
+    def __init__(self, t_data):
+        self.ticker_data = t_data
 
+    def get_days(self, days):
+        return days
+
+    def prediction_column(self):
+        ticker_data['Prediction'] = ticker_data['Close'].shift(-1)# adds a column Predictions next to Close column
+        print(ticker_data['Prediction'])
+        ticker_data.dropna(inplace=True) #removes any missing values
+        print(ticker_data)
+        return ticker_data
+
+    def data_to_array(self):
+        X = np.array(ticker_data.drop(['Prediction'], 1))
+        Y = np.array(ticker_data['Prediction'])
+        return X, Y
 
 ticker_code = input().upper()
 tk = Ticker(ticker_code)
 gd = GetData(ticker_code)
+ticker_data = gd.get_data()
+pd = ProcessData(ticker_data)
+try:
+    forecast_time = pd.get_days(int(input()))
+except ValueError:
+    print("Enter number of days.")
+ticker_data = pd.prediction_column()
+x, y = pd.data_to_array()
+x = preprocessing.scale(x)
+x_prediction = x[-forecast_time:]
 
-today_date = date.today()
-begin_month = today_date.replace(month=1, day=1)
-days = 5
-
-ticker_data = yf.Ticker(ticker_code)
-tickerData = ticker_data.history(period="1d", start=begin_month, end=today_date, output_format='pandas')
-tickerData['Prediction'] = tickerData['Close'].shift(-1)
-tickerData.dropna(inplace=True)
-forecast_time = days
-
-X = np.array(tickerData.drop(['Prediction'], 1))
-Y = np.array(tickerData['Prediction'])
-X = preprocessing.scale(X)
-X_prediction = X[-forecast_time:]
-
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.5)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.5)
 clf = LinearRegression()
-clf.fit(X_train, Y_train)
-prediction = (clf.predict(X_prediction))
+clf.fit(x_train, y_train)
+prediction = (clf.predict(x_prediction))
 
 print(prediction)
