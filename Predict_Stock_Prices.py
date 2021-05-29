@@ -13,7 +13,7 @@ class Ticker:
         self.ticker = ticker
 
     def check_ticker(self):
-            ticker_info = yf.Ticker(self.ticker)
+        ticker_info = yf.Ticker(self.ticker)
             if not ticker_info.info:
                 return False
             else:
