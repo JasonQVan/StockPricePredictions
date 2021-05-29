@@ -14,10 +14,10 @@ class Ticker:
 
     def check_ticker(self):
         ticker_info = yf.Ticker(self.ticker)
-            if not ticker_info.info:
-                return False
-            else:
-                return True
+        if not ticker_info.info:
+            return False
+        else:
+            return True
 
 
 # pulls the necessary data
